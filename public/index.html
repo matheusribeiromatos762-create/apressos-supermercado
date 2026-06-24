@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Apressos Supermercado</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #dfe6e9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .sistema {
+      max-width: 1350px;
+      margin: auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .topo {
+      background: #0b2f6b;
+      color: white;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .topo h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .hora {
+      font-size: 22px;
+      color: #ffeb3b;
+      font-weight: bold;
+    }
+
+    .abas, .sub-abas {
+      display: flex;
+      background: #222;
+    }
+
+    .abas button, .sub-abas button {
+      flex: 1;
+      padding: 16px;
+      border: none;
+      background: #222;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .abas button.ativo {
+      background: #1f7a3f;
+    }
+
+    .sub-abas {
+      background: #34495e;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .sub-abas button {
+      background: #34495e;
+    }
+
+    .sub-abas button.ativo {
+      background: #0b2f6b;
+    }
+
+    .conteudo, .sub-conteudo {
+      display: none;
+      padding: 25px;
+    }
+
+    .conteudo.ativo, .sub-conteudo.ativo {
+      display: block;
+    }
+
+    .sub-conteudo {
+      padding: 0;
+    }
+
+    .grid, .caixa-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 25px;
+    }
+
+    .card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 13px;
+      margin: 7px 0;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    input {
+      text-transform: uppercase;
+    }
+
+    button {
+      background: #1f7a3f;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .vermelho {
+      background: #c0392b;
+    }
+
+    .azul {
+      background: #0b2f6b;
+    }
+
+    .laranja {
+      background: #e67e22;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 15px;
+    }
+
+    th {
+      background: #0b2f6b;
+      color: white;
+      padding: 12px;
+    }
+
+    td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-transform: uppercase;
+    }
+
+    .info-produto, .produto-caixa {
+      background: #0b2f6b;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+
+    .info-produto h2, .produto-caixa h2 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+    }
+
+    .valor-grande {
+      font-size: 42px;
+      font-weight: bold;
+      color: #1f7a3f;
+      text-align: right;
+      margin-top: 20px;
+    }
+
+    .atalhos {
+      background: #222;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 15px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-box {
+      background: white;
+      width: 500px;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .cupom {
+      display: none;
+      width: 300px;
+      background: white;
+      padding: 15px;
+      font-family: monospace;
+      border: 1px dashed #000;
+      margin-top: 20px;
+    }
+
+    .linha {
+      border-top: 1px dashed #000;
+      margin: 8px 0;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      .cupom, .cupom * {
+        visibility: visible;
+      }
+
+      .cupom {
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sistema">
+  <div class="topo">
+    <h1>🛒 APRESSOS SUPERMERCADO</h1>
+    <div class="hora" id="hora"></div>
+  </div>
+
+  <div class="abas">
+    <button class="ativo" onclick="abrirAba('cadastro', this)">CADASTRO DE PRODUTOS</button>
+    <button onclick="abrirAba('caixa', this)">CAIXA</button>
+  </div>
+
+  <div id="cadastro" class="conteudo ativo">
+    <div class="sub-abas">
+      <button class="ativo" onclick="abrirSubAba('subCadastrar', this)">CADASTRAR PRODUTO</button>
+      <button onclick="abrirSubAba('subEstoque', this)">MOVIMENTAÇÃO DE ESTOQUE</button>
+      <button onclick="abrirSubAba('subEditar', this)">EDITAR PRODUTO</button>
+    </div>
+
+    <div id="subCadastrar" class="sub-conteudo ativo">
+      <div class="grid">
+        <div class="card">
+          <h2>Cadastrar Produto</h2>
+
+          <input type="text" id="codigo" placeholder="Código de barras">
+          <input type="text" id="nome" placeholder="Nome do produto">
+          <input type="number" id="preco" placeholder="Preço de venda">
+          <input type="number" id="estoqueInicial" placeholder="Quantidade em estoque">
+
+          <button onclick="salvarProduto()">Cadastrar Produto</button>
+        </div>
+
+        <div class="card">
+          <h2>Produtos Cadastrados</h2>
+          <input type="text" id="busca" placeholder="Buscar pelo código ou nome" oninput="listarProdutos()">
+
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Produto</th>
+                <th>Preço</th>
+                <th>Estoque</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaProdutos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="subEstoque" class="sub-conteudo">
+      <div class="grid">
+        <div class="card">
+          <h2>Movimentação de Estoque</h2>
+
+          <input type="text" id="codigoEstoque" placeholder="Código de barras">
+          <button onclick="buscarProdutoEstoque()">Buscar Produto</button>
+
+          <input type="number" id="quantidadeMovimento" placeholder="Quantidade">
+
+          <button onclick="adicionarEstoque()">Adicionar ao Estoque</button>
+          <button class="laranja" onclick="removerEstoque()">Remover do Estoque</button>
+          <button class="azul" onclick="definirEstoque()">Definir Estoque Total</button>
+        </div>
+
+        <div class="card">
+          <h2>Produto Encontrado</h2>
+
+          <div class="info-produto">
+            <p>Código:</p>
+            <h2 id="infoCodigo">---</h2>
+
+            <p>Produto:</p>
+            <h2 id="infoNome">---</h2>
+
+            <p>Preço:</p>
+            <h2 id="infoPreco">R$ 0,00</h2>
+
+            <p>Estoque Atual:</p>
+            <h2 id="infoEstoque">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="subEditar" class="sub-conteudo">
+      <div class="grid">
+        <div class="card">
+          <h2>Buscar Produto para Editar</h2>
+
+          <input type="text" id="codigoEditarBusca" placeholder="Código de barras">
+          <button onclick="buscarProdutoEditar()">Buscar Produto</button>
+
+          <hr>
+
+          <h2>Editar Informações</h2>
+
+          <input type="text" id="editarCodigo" placeholder="Novo código de barras">
+          <input type="text" id="editarNome" placeholder="Novo nome do produto">
+          <input type="number" id="editarPreco" placeholder="Novo preço">
+          <input type="number" id="editarEstoque" placeholder="Novo estoque">
+
+          <button class="azul" onclick="salvarEdicaoProduto()">Salvar Alterações</button>
+          <button class="vermelho" onclick="excluirProdutoEditando()">Excluir Produto</button>
+        </div>
+
+        <div class="card">
+          <h2>Produto em Edição</h2>
+
+          <div class="info-produto">
+            <p>Código Atual:</p>
+            <h2 id="editarInfoCodigo">---</h2>
+
+            <p>Produto Atual:</p>
+            <h2 id="editarInfoNome">---</h2>
+
+            <p>Preço Atual:</p>
+            <h2 id="editarInfoPreco">R$ 0,00</h2>
+
+            <p>Estoque Atual:</p>
+            <h2 id="editarInfoEstoque">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="caixa" class="conteudo">
+    <div class="caixa-grid">
+      <div class="card">
+        <h2>Entrada do Caixa</h2>
+
+        <input type="text" id="codigoVenda" placeholder="Código de barras">
+        <input type="number" id="quantidadeVenda" placeholder="Quantidade" value="1">
+
+        <button onclick="adicionarAoCarrinho()">Adicionar Produto</button>
+        <button class="azul" onclick="finalizarVenda()">Finalizar Venda / Imprimir Cupom</button>
+        <button class="vermelho" onclick="limparCarrinho()">Cancelar Venda</button>
+
+        <div class="valor-grande" id="totalVenda">R$ 0,00</div>
+
+        <div class="atalhos">
+          <b>Atalhos do Caixa:</b><br>
+          ENTER no código = Adicionar produto<br>
+          F1 = Finalizar venda<br>
+          ENTER = Confirmar venda<br>
+          ESC = Não finalizar
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="produto-caixa">
+          <small>Produto selecionado</small>
+          <h2 id="produtoSelecionado">Nenhum produto</h2>
+        </div>
+
+        <h2>Itens da Venda</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Qtd</th>
+              <th>Preço</th>
+              <th>Total</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="carrinhoTabela"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="cupom" id="cupom">
+      <h3 style="text-align:center;">APRESSOS SUPERMERCADO</h3>
+      <p style="text-align:center;">Comprovante de Venda</p>
+      <p id="dataCupom"></p>
+      <div class="linha"></div>
+      <div id="itensCupom"></div>
+      <div class="linha"></div>
+      <h3 id="totalCupom"></h3>
+      <p style="text-align:center;">Obrigado pela preferência</p>
+      <p style="text-align:center;">*** CUPOM NÃO FISCAL ***</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalFinalizar">
+  <div class="modal-box">
+    <h2>Deseja finalizar a venda?</h2>
+    <p>ENTER = Sim | ESC = Não</p>
+
+    <button onclick="confirmarVenda()">SIM</button>
+    <button class="vermelho" onclick="fecharModal()">NÃO</button>
+  </div>
+</div>
+
+<script>
+  let produtos = [];
+  let carrinho = [];
+  let produtoEstoqueSelecionado = null;
+  let produtoEditando = null;
+
+  async function carregarProdutos() {
+    const resposta = await fetch("/api/produtos");
+    produtos = await resposta.json();
+    listarProdutos();
+  }
+
+  function abrirAba(aba, botao) {
+    document.querySelectorAll(".conteudo").forEach(div => div.classList.remove("ativo"));
+    document.querySelectorAll(".abas button").forEach(btn => btn.classList.remove("ativo"));
+
+    document.getElementById(aba).classList.add("ativo");
+    botao.classList.add("ativo");
+
+    if (aba === "caixa") {
+      setTimeout(() => document.getElementById("codigoVenda").focus(), 100);
+    }
+  }
+
+  function abrirSubAba(subAba, botao) {
+    document.querySelectorAll(".sub-conteudo").forEach(div => div.classList.remove("ativo"));
+    document.querySelectorAll(".sub-abas button").forEach(btn => btn.classList.remove("ativo"));
+
+    document.getElementById(subAba).classList.add("ativo");
+    botao.classList.add("ativo");
+  }
+
+  function atualizarHora() {
+    const agora = new Date();
+    document.getElementById("hora").innerText = agora.toLocaleTimeString("pt-BR");
+  }
+
+  setInterval(atualizarHora, 1000);
+  atualizarHora();
+
+  function formatarDinheiro(valor) {
+    return Number(valor).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
+  }
+
+  async function salvarProduto() {
+    const codigo = document.getElementById("codigo").value.trim().toUpperCase();
+    const nome = document.getElementById("nome").value.trim().toUpperCase();
+    const preco = Number(document.getElementById("preco").value);
+    const estoque = Number(document.getElementById("estoqueInicial").value);
+
+    if (!codigo || !nome || !preco || isNaN(estoque)) {
+      alert("Preencha todos os campos");
+      return;
+    }
+
+    const resposta = await fetch("/api/produtos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        codigo,
+        nome,
+        preco,
+        estoque
+      })
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      alert(dados.erro || "Erro ao cadastrar produto");
+      return;
+    }
+
+    document.getElementById("codigo").value = "";
+    document.getElementById("nome").value = "";
+    document.getElementById("preco").value = "";
+    document.getElementById("estoqueInicial").value = "";
+
+    await carregarProdutos();
+    alert("Produto cadastrado com sucesso");
+  }
+
+  function listarProdutos() {
+    const tabela = document.getElementById("tabelaProdutos");
+    const busca = document.getElementById("busca").value.toLowerCase().trim();
+
+    tabela.innerHTML = "";
+
+    let lista = produtos;
+
+    if (busca) {
+      lista = produtos.filter(p =>
+        p.codigo.toLowerCase().includes(busca) ||
+        p.nome.toLowerCase().includes(busca)
+      );
+    }
+
+    lista.forEach(produto => {
+      tabela.innerHTML += `
+        <tr>
+          <td>${produto.codigo}</td>
+          <td>${produto.nome}</td>
+          <td>${formatarDinheiro(produto.preco)}</td>
+          <td>${produto.estoque}</td>
+          <td>
+            <button class="vermelho" onclick="excluirProduto(${produto.id})">Excluir</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  async function excluirProduto(id) {
+    if (!confirm("Deseja excluir esse produto?")) return;
+
+    await fetch("/api/produtos/" + id, {
+      method: "DELETE"
+    });
+
+    await carregarProdutos();
+  }
+
+  function buscarProdutoEstoque() {
+    const codigo = document.getElementById("codigoEstoque").value.trim().toUpperCase();
+    const produto = produtos.find(p => p.codigo === codigo);
+
+    if (!produto) {
+      alert("Produto não encontrado");
+      produtoEstoqueSelecionado = null;
+      limparInfoEstoque();
+      return;
+    }
+
+    produtoEstoqueSelecionado = produto;
+    atualizarInfoEstoque();
+  }
+
+  function atualizarInfoEstoque() {
+    document.getElementById("infoCodigo").innerText = produtoEstoqueSelecionado.codigo;
+    document.getElementById("infoNome").innerText = produtoEstoqueSelecionado.nome;
+    document.getElementById("infoPreco").innerText = formatarDinheiro(produtoEstoqueSelecionado.preco);
+    document.getElementById("infoEstoque").innerText = produtoEstoqueSelecionado.estoque;
+  }
+
+  function limparInfoEstoque() {
+    document.getElementById("infoCodigo").innerText = "---";
+    document.getElementById("infoNome").innerText = "---";
+    document.getElementById("infoPreco").innerText = "R$ 0,00";
+    document.getElementById("infoEstoque").innerText = "0";
+  }
+
+  async function atualizarProduto(produto) {
+    await fetch("/api/produtos/" + produto.id, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(produto)
+    });
+
+    await carregarProdutos();
+  }
+
+  async function movimentarEstoque(tipo) {
+    if (!produtoEstoqueSelecionado) {
+      alert("Busque um produto primeiro");
+      return;
+    }
+
+    const quantidade = Number(document.getElementById("quantidadeMovimento").value);
+
+    if (isNaN(quantidade) || quantidade < 0) {
+      alert("Digite uma quantidade válida");
+      return;
+    }
+
+    let novoEstoque = Number(produtoEstoqueSelecionado.estoque);
+
+    if (tipo === "adicionar") {
+      novoEstoque += quantidade;
+    }
+
+    if (tipo === "remover") {
+      if (novoEstoque < quantidade) {
+        alert("Quantidade maior que o estoque atual");
+        return;
+      }
+
+      novoEstoque -= quantidade;
+    }
+
+    if (tipo === "definir") {
+      novoEstoque = quantidade;
+    }
+
+    produtoEstoqueSelecionado.estoque = novoEstoque;
+
+    await atualizarProduto(produtoEstoqueSelecionado);
+
+    produtoEstoqueSelecionado = produtos.find(p => p.id === produtoEstoqueSelecionado.id);
+    atualizarInfoEstoque();
+
+    document.getElementById("quantidadeMovimento").value = "";
+    alert("Estoque atualizado com sucesso");
+  }
+
+  function adicionarEstoque() {
+    movimentarEstoque("adicionar");
+  }
+
+  function removerEstoque() {
+    movimentarEstoque("remover");
+  }
+
+  function definirEstoque() {
+    movimentarEstoque("definir");
+  }
+
+  function buscarProdutoEditar() {
+    const codigo = document.getElementById("codigoEditarBusca").value.trim().toUpperCase();
+    const produto = produtos.find(p => p.codigo === codigo);
+
+    if (!produto) {
+      alert("Produto não encontrado");
+      produtoEditando = null;
+      limparInfoEditar();
+      return;
+    }
+
+    produtoEditando = produto;
+
+    document.getElementById("editarCodigo").value = produto.codigo;
+    document.getElementById("editarNome").value = produto.nome;
+    document.getElementById("editarPreco").value = produto.preco;
+    document.getElementById("editarEstoque").value = produto.estoque;
+
+    atualizarInfoEditar();
+  }
+
+  function atualizarInfoEditar() {
+    document.getElementById("editarInfoCodigo").innerText = produtoEditando.codigo;
+    document.getElementById("editarInfoNome").innerText = produtoEditando.nome;
+    document.getElementById("editarInfoPreco").innerText = formatarDinheiro(produtoEditando.preco);
+    document.getElementById("editarInfoEstoque").innerText = produtoEditando.estoque;
+  }
+
+  function limparInfoEditar() {
+    document.getElementById("editarInfoCodigo").innerText = "---";
+    document.getElementById("editarInfoNome").innerText = "---";
+    document.getElementById("editarInfoPreco").innerText = "R$ 0,00";
+    document.getElementById("editarInfoEstoque").innerText = "0";
+
+    document.getElementById("editarCodigo").value = "";
+    document.getElementById("editarNome").value = "";
+    document.getElementById("editarPreco").value = "";
+    document.getElementById("editarEstoque").value = "";
+  }
+
+  async function salvarEdicaoProduto() {
+    if (!produtoEditando) {
+      alert("Busque um produto primeiro");
+      return;
+    }
+
+    produtoEditando.codigo = document.getElementById("editarCodigo").value.trim().toUpperCase();
+    produtoEditando.nome = document.getElementById("editarNome").value.trim().toUpperCase();
+    produtoEditando.preco = Number(document.getElementById("editarPreco").value);
+    produtoEditando.estoque = Number(document.getElementById("editarEstoque").value);
+
+    if (!produtoEditando.codigo || !produtoEditando.nome || isNaN(produtoEditando.preco) || isNaN(produtoEditando.estoque)) {
+      alert("Preencha todos os campos corretamente");
+      return;
+    }
+
+    await atualizarProduto(produtoEditando);
+
+    produtoEditando = produtos.find(p => p.id === produtoEditando.id);
+    atualizarInfoEditar();
+
+    alert("Produto editado com sucesso");
+  }
+
+  async function excluirProdutoEditando() {
+    if (!produtoEditando) {
+      alert("Busque um produto primeiro");
+      return;
+    }
+
+    if (!confirm("Deseja excluir esse produto definitivamente?")) return;
+
+    await excluirProduto(produtoEditando.id);
+
+    produtoEditando = null;
+    limparInfoEditar();
+
+    alert("Produto excluído com sucesso");
+  }
+
+  function adicionarAoCarrinho() {
+    const codigo = document.getElementById("codigoVenda").value.trim().toUpperCase();
+    const quantidade = Number(document.getElementById("quantidadeVenda").value);
+
+    if (!codigo || quantidade <= 0) {
+      alert("Digite o código e a quantidade");
+      return;
+    }
+
+    const produto = produtos.find(p => p.codigo === codigo);
+
+    if (!produto) {
+      alert("Produto não encontrado");
+      return;
+    }
+
+    if (produto.estoque < quantidade) {
+      alert("Estoque insuficiente");
+      return;
+    }
+
+    document.getElementById("produtoSelecionado").innerText = produto.nome;
+
+    const itemExistente = carrinho.find(item => item.codigo === codigo);
+
+    if (itemExistente) {
+      itemExistente.quantidade += quantidade;
+    } else {
+      carrinho.push({
+        codigo: produto.codigo,
+        nome: produto.nome,
+        preco: produto.preco,
+        quantidade: quantidade
+      });
+    }
+
+    document.getElementById("codigoVenda").value = "";
+    document.getElementById("quantidadeVenda").value = 1;
+    document.getElementById("codigoVenda").focus();
+
+    listarCarrinho();
+  }
+
+  function listarCarrinho() {
+    const tabela = document.getElementById("carrinhoTabela");
+    tabela.innerHTML = "";
+
+    let total = 0;
+
+    carrinho.forEach((item, index) => {
+      const totalItem = item.preco * item.quantidade;
+      total += totalItem;
+
+      tabela.innerHTML += `
+        <tr>
+          <td>${item.nome}</td>
+          <td>${item.quantidade}</td>
+          <td>${formatarDinheiro(item.preco)}</td>
+          <td>${formatarDinheiro(totalItem)}</td>
+          <td>
+            <button class="vermelho" onclick="removerItem(${index})">Remover</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    document.getElementById("totalVenda").innerText = formatarDinheiro(total);
+  }
+
+  function removerItem(index) {
+    carrinho.splice(index, 1);
+    listarCarrinho();
+  }
+
+  function limparCarrinho() {
+    if (confirm("Cancelar essa venda?")) {
+      carrinho = [];
+      listarCarrinho();
+      document.getElementById("produtoSelecionado").innerText = "Nenhum produto";
+    }
+  }
+
+  function finalizarVenda() {
+    if (carrinho.length === 0) {
+      alert("Nenhum produto no caixa");
+      return;
+    }
+
+    document.getElementById("modalFinalizar").style.display = "flex";
+  }
+
+  function fecharModal() {
+    document.getElementById("modalFinalizar").style.display = "none";
+    document.getElementById("codigoVenda").focus();
+  }
+
+  async function confirmarVenda() {
+    document.getElementById("modalFinalizar").style.display = "none";
+
+    let total = 0;
+    let itensCupom = "";
+
+    carrinho.forEach(item => {
+      const totalItem = item.preco * item.quantidade;
+      total += totalItem;
+
+      itensCupom += `
+        <p>
+          ${item.nome}<br>
+          ${item.quantidade} x ${formatarDinheiro(item.preco)} = ${formatarDinheiro(totalItem)}
+        </p>
+      `;
+    });
+
+    const resposta = await fetch("/api/venda", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        carrinho
+      })
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      alert(dados.erro || "Erro ao finalizar venda");
+      return;
+    }
+
+    const agora = new Date();
+
+    document.getElementById("dataCupom").innerText =
+      "Data: " + agora.toLocaleDateString("pt-BR") +
+      " " + agora.toLocaleTimeString("pt-BR");
+
+    document.getElementById("itensCupom").innerHTML = itensCupom;
+    document.getElementById("totalCupom").innerText = "TOTAL: " + formatarDinheiro(total);
+
+    document.getElementById("cupom").style.display = "block";
+
+    window.print();
+
+    carrinho = [];
+    listarCarrinho();
+
+    document.getElementById("produtoSelecionado").innerText = "Nenhum produto";
+
+    await carregarProdutos();
+
+    document.getElementById("codigoVenda").focus();
+  }
+
+  document.addEventListener("keydown", function(e) {
+    const modalAberto = document.getElementById("modalFinalizar").style.display === "flex";
+
+    if (e.key === "F1") {
+      e.preventDefault();
+      finalizarVenda();
+    }
+
+    if (e.key === "Enter" && modalAberto) {
+      e.preventDefault();
+      confirmarVenda();
+    }
+
+    if (e.key === "Escape" && modalAberto) {
+      e.preventDefault();
+      fecharModal();
+    }
+  });
+
+  document.getElementById("codigoVenda").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      adicionarAoCarrinho();
+    }
+  });
+
+  document.getElementById("codigoEstoque").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      buscarProdutoEstoque();
+    }
+  });
+
+  document.getElementById("codigoEditarBusca").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      buscarProdutoEditar();
+    }
+  });
+
+  carregarProdutos();
+
+  setInterval(carregarProdutos, 5000);
+</script>
+
+</body>
+</html>
