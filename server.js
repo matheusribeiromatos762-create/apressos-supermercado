@@ -4,7 +4,7 @@ const cors = require("cors");
 const path = require("path");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -24,16 +24,17 @@ db.run(`
 
 app.get("/api/produtos", (req, res) => {
   db.all("SELECT * FROM produtos ORDER BY nome ASC", [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ erro: err.message });
-    }
-
+    if (err) return res.status(500).json({ erro: err.message });
     res.json(rows);
   });
 });
 
 app.post("/api/produtos", (req, res) => {
   const { codigo, nome, preco, estoque } = req.body;
+
+  if (!codigo || !nome || preco === undefined || estoque === undefined) {
+    return res.status(400).json({ erro: "Preencha todos os campos" });
+  }
 
   db.run(
     "INSERT INTO produtos (codigo, nome, preco, estoque) VALUES (?, ?, ?, ?)",
@@ -56,6 +57,10 @@ app.post("/api/produtos", (req, res) => {
 app.put("/api/produtos/:id", (req, res) => {
   const { codigo, nome, preco, estoque } = req.body;
 
+  if (!codigo || !nome || preco === undefined || estoque === undefined) {
+    return res.status(400).json({ erro: "Preencha todos os campos" });
+  }
+
   db.run(
     "UPDATE produtos SET codigo = ?, nome = ?, preco = ?, estoque = ? WHERE id = ?",
     [
@@ -66,10 +71,7 @@ app.put("/api/produtos/:id", (req, res) => {
       req.params.id
     ],
     function (err) {
-      if (err) {
-        return res.status(400).json({ erro: err.message });
-      }
-
+      if (err) return res.status(400).json({ erro: err.message });
       res.json({ sucesso: true });
     }
   );
@@ -77,10 +79,7 @@ app.put("/api/produtos/:id", (req, res) => {
 
 app.delete("/api/produtos/:id", (req, res) => {
   db.run("DELETE FROM produtos WHERE id = ?", [req.params.id], function (err) {
-    if (err) {
-      return res.status(500).json({ erro: err.message });
-    }
-
+    if (err) return res.status(500).json({ erro: err.message });
     res.json({ sucesso: true });
   });
 });
@@ -107,6 +106,6 @@ app.post("/api/venda", (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log("====================================");
   console.log("APRESSOS SUPERMERCADO ONLINE");
-  console.log(`Acesse no PC: http://localhost:${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
   console.log("====================================");
 });
