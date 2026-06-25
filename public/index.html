@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apressos Supermercado</title>
+  <title>Apressos</title>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -16,7 +16,7 @@
     }
 
     .sistema {
-      max-width: 1350px;
+      max-width: 1400px;
       margin: auto;
       background: white;
       border-radius: 10px;
@@ -35,7 +35,7 @@
 
     .topo h1 {
       margin: 0;
-      font-size: 28px;
+      font-size: 30px;
     }
 
     .hora {
@@ -92,7 +92,7 @@
       padding: 0;
     }
 
-    .grid, .caixa-grid {
+    .grid {
       display: grid;
       grid-template-columns: 420px 1fr;
       gap: 25px;
@@ -176,24 +176,14 @@
       text-overflow: ellipsis;
     }
 
-    #tabelaProdutos td:nth-child(3) {
-      width: 80px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    #tabelaProdutos td:nth-child(4) {
-      width: 70px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
+    #tabelaProdutos td:nth-child(3),
+    #tabelaProdutos td:nth-child(4),
     #tabelaProdutos td:nth-child(5) {
-      width: 80px;
       text-align: center;
+      white-space: nowrap;
     }
 
-    .info-produto, .produto-caixa {
+    .info-produto {
       background: #0b2f6b;
       color: white;
       padding: 20px;
@@ -201,26 +191,191 @@
       text-transform: uppercase;
     }
 
-    .info-produto h2, .produto-caixa h2 {
+    .info-produto h2 {
       margin: 0 0 10px 0;
       font-size: 28px;
     }
 
-    .valor-grande {
-      font-size: 42px;
-      font-weight: bold;
-      color: #1f7a3f;
-      text-align: right;
-      margin-top: 20px;
+    /* NOVA INTERFACE DO CAIXA */
+
+    .caixa-pdv {
+      background: #101418;
+      padding: 14px;
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: 46% 54%;
+      gap: 12px;
+      min-height: 680px;
+      color: white;
     }
 
-    .atalhos {
-      background: #222;
-      color: white;
-      padding: 12px;
+    .painel-esquerdo {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pdv-box {
+      background: linear-gradient(#151a22, #0b0f16);
+      border: 2px solid #d9d9d9;
       border-radius: 8px;
-      margin-top: 15px;
-      font-size: 15px;
+      padding: 14px;
+      color: white;
+    }
+
+    .pdv-label {
+      color: #fff600;
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .descricao-produto {
+      height: 95px;
+      font-size: 24px;
+      color: white;
+      text-transform: uppercase;
+      overflow: hidden;
+    }
+
+    .codigo-pdv input {
+      background: #05070a;
+      color: white;
+      border: none;
+      outline: none;
+      font-size: 34px;
+      padding: 14px;
+      margin: 0;
+      width: 100%;
+    }
+
+    .linha-info-pdv {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .info-mini {
+      color: #fff600;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .info-valor {
+      font-size: 28px;
+      font-weight: bold;
+      color: white;
+      margin-top: 5px;
+    }
+
+    .subtotal-box {
+      height: 130px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .subtotal-titulo {
+      color: #fff600;
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    .subtotal-valor {
+      font-size: 76px;
+      font-weight: bold;
+      color: white;
+      line-height: 1;
+    }
+
+    .cliente-box {
+      min-height: 110px;
+    }
+
+    .atalhos-pdv {
+      background: #05070a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      color: #ddd;
+    }
+
+    .botoes-pdv {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .painel-direito {
+      background: #fff8c8;
+      border: 2px solid #b9aa6b;
+      border-radius: 4px;
+      color: #222;
+      padding: 10px;
+      font-family: "Courier New", monospace;
+    }
+
+    .cupom-titulo-tela {
+      text-align: center;
+      font-size: 20px;
+      letter-spacing: 8px;
+      margin-bottom: 8px;
+      color: #5c4c1a;
+      border-bottom: 1px dashed #777;
+      padding-bottom: 6px;
+    }
+
+    .tabela-cupom-pdv {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: transparent;
+      margin-top: 0;
+    }
+
+    .tabela-cupom-pdv th {
+      background: transparent;
+      color: #5c4c1a;
+      border-bottom: 1px dashed #777;
+      font-size: 13px;
+      padding: 5px;
+    }
+
+    .tabela-cupom-pdv td {
+      background: transparent;
+      color: #222;
+      border: none;
+      border-bottom: 1px dotted #c2b67a;
+      padding: 5px;
+      font-size: 12px;
+    }
+
+    .tabela-cupom-pdv td:nth-child(2) {
+      max-width: 210px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tabela-cupom-pdv td:nth-child(3),
+    .tabela-cupom-pdv td:nth-child(4),
+    .tabela-cupom-pdv td:nth-child(5) {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .rodape-pdv {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #ddd;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .mobile-only {
+      display: none;
     }
 
     .modal {
@@ -270,10 +425,6 @@
       margin: 8px 0;
     }
 
-    .mobile-only {
-      display: none;
-    }
-
     @media (max-width: 768px) {
       body {
         padding: 5px;
@@ -305,7 +456,7 @@
         padding: 10px;
       }
 
-      .grid, .caixa-grid {
+      .grid {
         grid-template-columns: 1fr;
         gap: 15px;
       }
@@ -329,18 +480,42 @@
         max-width: 180px;
       }
 
-      .valor-grande {
-        font-size: 34px;
-        text-align: center;
-      }
-
-      .produto-caixa h2,
-      .info-produto h2 {
-        font-size: 22px;
-      }
-
       .mobile-only {
         display: block;
+      }
+
+      .caixa-pdv {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .descricao-produto {
+        height: auto;
+        min-height: 80px;
+        font-size: 20px;
+      }
+
+      .codigo-pdv input {
+        font-size: 26px;
+      }
+
+      .linha-info-pdv {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .subtotal-box {
+        height: auto;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .subtotal-valor {
+        font-size: 54px;
+      }
+
+      .cupom-titulo-tela {
+        font-size: 16px;
+        letter-spacing: 4px;
       }
 
       .modal-box {
@@ -368,10 +543,10 @@
   </style>
 </head>
 <body>
-
-<div class="sistema">
+  
+ <div class="sistema">
   <div class="topo">
-    <h1>🛒 APRESSOS SUPERMERCADO</h1>
+    <h1>🛒 APRESSOS</h1>
     <div class="hora" id="hora"></div>
   </div>
 
@@ -506,46 +681,75 @@
   </div>
 
   <div id="caixa" class="conteudo">
-    <div class="caixa-grid">
-      <div class="card">
-        <h2>Entrada do Caixa</h2>
+    <div class="caixa-pdv">
+      <div class="painel-esquerdo">
+        <div class="pdv-box">
+          <div class="pdv-label">Descrição do Produto:</div>
+          <div class="descricao-produto" id="produtoSelecionado">NENHUM PRODUTO</div>
+        </div>
 
-        <input type="text" id="codigoVenda" placeholder="Código de barras">
-        <button class="azul mobile-only" onclick="abrirScanner('codigoVenda')">📷 Ler Código pela Câmera</button>
+        <div class="pdv-box codigo-pdv">
+          <div class="pdv-label">Código do Produto:</div>
+          <input type="text" id="codigoVenda" placeholder="">
+          <button class="azul mobile-only" onclick="abrirScanner('codigoVenda')">📷 Ler Código pela Câmera</button>
+        </div>
 
-        <input type="number" id="quantidadeVenda" placeholder="Quantidade" value="1">
+        <div class="pdv-box">
+          <div class="linha-info-pdv">
+            <div>
+              <div class="info-mini">UN:</div>
+              <div class="info-valor">UN</div>
+            </div>
+            <div>
+              <div class="info-mini">Quantidade:</div>
+              <input type="number" id="quantidadeVenda" value="1" style="text-align:center; font-size:24px; background:#05070a; color:white; border:1px solid #555;">
+            </div>
+            <div>
+              <div class="info-mini">Preço Unit.:</div>
+              <div class="info-valor" id="precoUnitarioPDV">0,00</div>
+            </div>
+            <div>
+              <div class="info-mini">Total:</div>
+              <div class="info-valor" id="totalItemPDV">0,00</div>
+            </div>
+          </div>
+        </div>
 
-        <button onclick="adicionarAoCarrinho()">Adicionar Produto</button>
-        <button class="azul" onclick="finalizarVenda()">Finalizar Venda / Imprimir Cupom</button>
-        <button class="vermelho" onclick="limparCarrinho()">Cancelar Venda</button>
+        <div class="pdv-box subtotal-box">
+          <div class="subtotal-titulo">SUBTOTAL</div>
+          <div class="subtotal-valor" id="subtotalPDV">0,00</div>
+        </div>
 
-        <div class="valor-grande" id="totalVenda">R$ 0,00</div>
+        <div class="pdv-box cliente-box">
+          <div class="pdv-label">Cliente:</div>
+          <div>CONSUMIDOR FINAL</div>
+        </div>
 
-        <div class="atalhos">
-          <b>Atalhos do Caixa:</b><br>
-          ENTER no código = Adicionar produto<br>
-          F1 = Finalizar venda<br>
-          ENTER = Confirmar venda<br>
-          ESC = Não finalizar
+        <div class="botoes-pdv">
+          <button onclick="adicionarAoCarrinho()">Adicionar Produto</button>
+          <button class="azul" onclick="finalizarVenda()">Finalizar Venda</button>
+          <button class="vermelho" onclick="limparCarrinho()">Cancelar Venda</button>
+          <button class="laranja" onclick="removerUltimoItem()">Remover Último Item</button>
+        </div>
+
+        <div class="atalhos-pdv">
+          ENTER no código = Adicionar produto |
+          F1 = Finalizar venda |
+          ESC = Cancelar confirmação
         </div>
       </div>
 
-      <div class="card">
-        <div class="produto-caixa">
-          <small>Produto selecionado</small>
-          <h2 id="produtoSelecionado">Nenhum produto</h2>
-        </div>
+      <div class="painel-direito">
+        <div class="cupom-titulo-tela">CUPOM FISCAL ELETRÔNICO</div>
 
-        <h2>Itens da Venda</h2>
-
-        <table>
+        <table class="tabela-cupom-pdv">
           <thead>
             <tr>
-              <th>Produto</th>
-              <th>Qtd</th>
-              <th>Preço</th>
-              <th>Total</th>
-              <th>Ação</th>
+              <th>CÓDIGO</th>
+              <th>DESCRIÇÃO</th>
+              <th>QTD.</th>
+              <th>VL UNIT.</th>
+              <th>VALOR</th>
             </tr>
           </thead>
           <tbody id="carrinhoTabela"></tbody>
@@ -553,8 +757,15 @@
       </div>
     </div>
 
+    <div class="rodape-pdv">
+      <span>LOJA: 0001</span>
+      <span>CAIXA: 001</span>
+      <span>OPERADOR: 001</span>
+      <span>ON-LINE</span>
+    </div>
+
     <div class="cupom" id="cupom">
-      <h3 style="text-align:center;">APRESSOS SUPERMERCADO</h3>
+      <h3 style="text-align:center;">APRESSOS</h3>
       <p style="text-align:center;">Comprovante de Venda</p>
       <p id="dataCupom"></p>
       <div class="linha"></div>
@@ -584,9 +795,8 @@
     <div id="reader"></div>
     <button class="vermelho" onclick="fecharScanner()">Fechar Câmera</button>
   </div>
-</div>
-
-<script>
+</div> 
+  <script>
   let produtos = [];
   let carrinho = [];
   let produtoEstoqueSelecionado = null;
@@ -636,6 +846,13 @@
     });
   }
 
+  function formatarNumero(valor) {
+    return Number(valor).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
   async function buscarNomeProdutoPorCodigo(campoCodigo, campoNome) {
     const codigo = document.getElementById(campoCodigo).value.trim();
 
@@ -664,7 +881,7 @@
           alert("Produto encontrado, mas sem nome cadastrado na internet");
         }
       } else {
-        alert("Produto não encontrado na internet. Cadastre o nome manualmente");
+        alert("Produto não encontrado na internet. Cadastre manualmente");
       }
     } catch (erro) {
       alert("Erro ao buscar produto na internet");
@@ -1013,8 +1230,6 @@
       return;
     }
 
-    document.getElementById("produtoSelecionado").innerText = produto.nome;
-
     const itemExistente = carrinho.find(item => item.codigo === codigo);
 
     if (itemExistente) {
@@ -1023,10 +1238,14 @@
       carrinho.push({
         codigo: produto.codigo,
         nome: produto.nome,
-        preco: produto.preco,
+        preco: Number(produto.preco),
         quantidade: quantidade
       });
     }
+
+    document.getElementById("produtoSelecionado").innerText = produto.nome;
+    document.getElementById("precoUnitarioPDV").innerText = formatarNumero(produto.preco);
+    document.getElementById("totalItemPDV").innerText = formatarNumero(Number(produto.preco) * quantidade);
 
     document.getElementById("codigoVenda").value = "";
     document.getElementById("quantidadeVenda").value = 1;
@@ -1041,36 +1260,49 @@
 
     let total = 0;
 
-    carrinho.forEach((item, index) => {
-      const totalItem = item.preco * item.quantidade;
+    carrinho.forEach(item => {
+      const totalItem = Number(item.preco) * Number(item.quantidade);
       total += totalItem;
 
       tabela.innerHTML += `
         <tr>
+          <td>${item.codigo}</td>
           <td title="${item.nome}">${item.nome}</td>
           <td>${item.quantidade}</td>
-          <td>${formatarDinheiro(item.preco)}</td>
-          <td>${formatarDinheiro(totalItem)}</td>
-          <td>
-            <button class="vermelho" onclick="removerItem(${index})">Remover</button>
-          </td>
+          <td>${formatarNumero(item.preco)}</td>
+          <td>${formatarNumero(totalItem)}</td>
         </tr>
       `;
     });
 
-    document.getElementById("totalVenda").innerText = formatarDinheiro(total);
+    document.getElementById("subtotalPDV").innerText = formatarNumero(total);
   }
 
-  function removerItem(index) {
-    carrinho.splice(index, 1);
+  function removerUltimoItem() {
+    if (carrinho.length === 0) {
+      alert("Nenhum item para remover");
+      return;
+    }
+
+    carrinho.pop();
     listarCarrinho();
+
+    if (carrinho.length === 0) {
+      document.getElementById("produtoSelecionado").innerText = "NENHUM PRODUTO";
+      document.getElementById("precoUnitarioPDV").innerText = "0,00";
+      document.getElementById("totalItemPDV").innerText = "0,00";
+    }
   }
 
   function limparCarrinho() {
     if (confirm("Cancelar essa venda?")) {
       carrinho = [];
       listarCarrinho();
-      document.getElementById("produtoSelecionado").innerText = "Nenhum produto";
+
+      document.getElementById("produtoSelecionado").innerText = "NENHUM PRODUTO";
+      document.getElementById("precoUnitarioPDV").innerText = "0,00";
+      document.getElementById("totalItemPDV").innerText = "0,00";
+      document.getElementById("subtotalPDV").innerText = "0,00";
     }
   }
 
@@ -1095,7 +1327,7 @@
     let itensCupom = "";
 
     carrinho.forEach(item => {
-      const totalItem = item.preco * item.quantidade;
+      const totalItem = Number(item.preco) * Number(item.quantidade);
       total += totalItem;
 
       itensCupom += `
@@ -1139,7 +1371,10 @@
     carrinho = [];
     listarCarrinho();
 
-    document.getElementById("produtoSelecionado").innerText = "Nenhum produto";
+    document.getElementById("produtoSelecionado").innerText = "NENHUM PRODUTO";
+    document.getElementById("precoUnitarioPDV").innerText = "0,00";
+    document.getElementById("totalItemPDV").innerText = "0,00";
+    document.getElementById("subtotalPDV").innerText = "0,00";
 
     await carregarProdutos();
 
@@ -1187,7 +1422,6 @@
   });
 
   carregarProdutos();
-
   setInterval(carregarProdutos, 5000);
 </script>
 
