@@ -304,6 +304,54 @@ app.get("/api/relatorios/:periodo", async (req, res) => {
   }
 });
 
+app.get("/api/relatorio-diario-impressao", async (req, res) => {
+  try {
+    const filtro = `
+      WHERE v.criada_em >= date_trunc('day', CURRENT_TIMESTAMP)
+    `;
+
+    const resumo = await pool.query(`
+      SELECT 
+        COUNT(*)::INTEGER AS quantidade_vendas,
+        COALESCE(SUM(v.total), 0)::NUMERIC(10,2) AS total_vendido
+      FROM vendas v
+      ${filtro}
+    `);
+
+    const itens = await pool.query(`
+      SELECT 
+        COALESCE(SUM(vi.quantidade), 0)::INTEGER AS quantidade_itens
+      FROM venda_itens vi
+      JOIN vendas v ON v.id = vi.venda_id
+      ${filtro}
+    `);
+
+    const produtos = await pool.query(`
+      SELECT 
+        vi.codigo,
+        vi.nome,
+        SUM(vi.quantidade)::INTEGER AS quantidade,
+        SUM(vi.total_item)::NUMERIC(10,2) AS total
+      FROM venda_itens vi
+      JOIN vendas v ON v.id = vi.venda_id
+      ${filtro}
+      GROUP BY vi.codigo, vi.nome
+      ORDER BY quantidade DESC
+    `);
+
+    res.json({
+      sucesso: true,
+      data: new Date(),
+      quantidade_vendas: resumo.rows[0].quantidade_vendas,
+      quantidade_itens: itens.rows[0].quantidade_itens,
+      total_vendido: resumo.rows[0].total_vendido,
+      produtos: produtos.rows
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: erro.message });
+  }
+});
+
 iniciarBanco()
   .then(() => {
     app.listen(PORT, "0.0.0.0", () => {
