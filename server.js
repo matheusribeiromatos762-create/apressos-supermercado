@@ -1,111 +1,216 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
 const path = require("path");
+const { Pool } = require("pg");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+if (!process.env.DATABASE_URL) {
+  console.error("ERRO: DATABASE_URL não configurada no Render");
+  process.exit(1);
+}
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-const db = new sqlite3.Database("./database.db");
+async function iniciarBanco() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS produtos (
+      id SERIAL PRIMARY KEY,
+      codigo TEXT UNIQUE NOT NULL,
+      nome TEXT NOT NULL,
+      preco NUMERIC(10,2) NOT NULL,
+      estoque INTEGER NOT NULL DEFAULT 0,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-db.run(`
-  CREATE TABLE IF NOT EXISTS produtos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    codigo TEXT UNIQUE NOT NULL,
-    nome TEXT NOT NULL,
-    preco REAL NOT NULL,
-    estoque INTEGER NOT NULL
-  )
-`);
+  console.log("Banco PostgreSQL conectado e tabela produtos pronta");
+}
 
-app.get("/api/produtos", (req, res) => {
-  db.all("SELECT * FROM produtos ORDER BY nome ASC", [], (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
+app.get("/api/produtos", async (req, res) => {
+  try {
+    const resultado = await pool.query(
+      "SELECT id, codigo, nome, preco, estoque FROM produtos ORDER BY nome ASC"
+    );
+
+    res.json(resultado.rows);
+  } catch (erro) {
+    res.status(500).json({ erro: erro.message });
+  }
 });
 
-app.post("/api/produtos", (req, res) => {
-  const { codigo, nome, preco, estoque } = req.body;
+app.post("/api/produtos", async (req, res) => {
+  try {
+    const { codigo, nome, preco, estoque } = req.body;
 
-  if (!codigo || !nome || preco === undefined || estoque === undefined) {
-    return res.status(400).json({ erro: "Preencha todos os campos" });
+    if (!codigo || !nome || preco === undefined || estoque === undefined) {
+      return res.status(400).json({ erro: "Preencha todos os campos" });
+    }
+
+    const resultado = await pool.query(
+      `
+      INSERT INTO produtos (codigo, nome, preco, estoque)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id
+      `,
+      [
+        codigo.toUpperCase(),
+        nome.toUpperCase(),
+        Number(preco),
+        Number(estoque)
+      ]
+    );
+
+    res.json({
+      sucesso: true,
+      id: resultado.rows[0].id
+    });
+  } catch (erro) {
+    if (erro.code === "23505") {
+      return res.status(400).json({ erro: "Código de barras já cadastrado" });
+    }
+
+    res.status(500).json({ erro: erro.message });
   }
+});
 
-  db.run(
-    "INSERT INTO produtos (codigo, nome, preco, estoque) VALUES (?, ?, ?, ?)",
-    [
-      codigo.toUpperCase(),
-      nome.toUpperCase(),
-      Number(preco),
-      Number(estoque)
-    ],
-    function (err) {
-      if (err) {
-        return res.status(400).json({ erro: "Código de barras já cadastrado" });
+app.put("/api/produtos/:id", async (req, res) => {
+  try {
+    const { codigo, nome, preco, estoque } = req.body;
+
+    if (!codigo || !nome || preco === undefined || estoque === undefined) {
+      return res.status(400).json({ erro: "Preencha todos os campos" });
+    }
+
+    const resultado = await pool.query(
+      `
+      UPDATE produtos
+      SET codigo = $1,
+          nome = $2,
+          preco = $3,
+          estoque = $4
+      WHERE id = $5
+      RETURNING id
+      `,
+      [
+        codigo.toUpperCase(),
+        nome.toUpperCase(),
+        Number(preco),
+        Number(estoque),
+        req.params.id
+      ]
+    );
+
+    if (resultado.rowCount === 0) {
+      return res.status(404).json({ erro: "Produto não encontrado" });
+    }
+
+    res.json({ sucesso: true });
+  } catch (erro) {
+    if (erro.code === "23505") {
+      return res.status(400).json({ erro: "Já existe outro produto com esse código" });
+    }
+
+    res.status(500).json({ erro: erro.message });
+  }
+});
+
+app.delete("/api/produtos/:id", async (req, res) => {
+  try {
+    const resultado = await pool.query(
+      "DELETE FROM produtos WHERE id = $1 RETURNING id",
+      [req.params.id]
+    );
+
+    if (resultado.rowCount === 0) {
+      return res.status(404).json({ erro: "Produto não encontrado" });
+    }
+
+    res.json({ sucesso: true });
+  } catch (erro) {
+    res.status(500).json({ erro: erro.message });
+  }
+});
+
+app.post("/api/venda", async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const { carrinho } = req.body;
+
+    if (!carrinho || carrinho.length === 0) {
+      return res.status(400).json({ erro: "Carrinho vazio" });
+    }
+
+    await client.query("BEGIN");
+
+    for (const item of carrinho) {
+      const resultado = await client.query(
+        `
+        SELECT nome, estoque
+        FROM produtos
+        WHERE codigo = $1
+        FOR UPDATE
+        `,
+        [item.codigo]
+      );
+
+      if (resultado.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ erro: `Produto não encontrado: ${item.codigo}` });
       }
 
-      res.json({ sucesso: true, id: this.lastID });
-    }
-  );
-});
+      const produto = resultado.rows[0];
 
-app.put("/api/produtos/:id", (req, res) => {
-  const { codigo, nome, preco, estoque } = req.body;
+      if (Number(produto.estoque) < Number(item.quantidade)) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          erro: `Estoque insuficiente para ${produto.nome}`
+        });
+      }
 
-  if (!codigo || !nome || preco === undefined || estoque === undefined) {
-    return res.status(400).json({ erro: "Preencha todos os campos" });
-  }
-
-  db.run(
-    "UPDATE produtos SET codigo = ?, nome = ?, preco = ?, estoque = ? WHERE id = ?",
-    [
-      codigo.toUpperCase(),
-      nome.toUpperCase(),
-      Number(preco),
-      Number(estoque),
-      req.params.id
-    ],
-    function (err) {
-      if (err) return res.status(400).json({ erro: err.message });
-      res.json({ sucesso: true });
-    }
-  );
-});
-
-app.delete("/api/produtos/:id", (req, res) => {
-  db.run("DELETE FROM produtos WHERE id = ?", [req.params.id], function (err) {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json({ sucesso: true });
-  });
-});
-
-app.post("/api/venda", (req, res) => {
-  const { carrinho } = req.body;
-
-  if (!carrinho || carrinho.length === 0) {
-    return res.status(400).json({ erro: "Carrinho vazio" });
-  }
-
-  db.serialize(() => {
-    carrinho.forEach(item => {
-      db.run(
-        "UPDATE produtos SET estoque = estoque - ? WHERE codigo = ?",
+      await client.query(
+        `
+        UPDATE produtos
+        SET estoque = estoque - $1
+        WHERE codigo = $2
+        `,
         [Number(item.quantidade), item.codigo]
       );
-    });
+    }
+
+    await client.query("COMMIT");
 
     res.json({ sucesso: true });
-  });
+  } catch (erro) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ erro: erro.message });
+  } finally {
+    client.release();
+  }
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("====================================");
-  console.log("APRESSOS SUPERMERCADO ONLINE");
-  console.log(`Servidor rodando na porta ${PORT}`);
-  console.log("====================================");
-});
+iniciarBanco()
+  .then(() => {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("====================================");
+      console.log("APRESSOS SUPERMERCADO ONLINE");
+      console.log("Banco: Neon PostgreSQL");
+      console.log(`Servidor rodando na porta ${PORT}`);
+      console.log("====================================");
+    });
+  })
+  .catch((erro) => {
+    console.error("Erro ao iniciar banco:", erro);
+    process.exit(1);
+  });
