@@ -135,19 +135,62 @@
       width: 100%;
       border-collapse: collapse;
       background: white;
-      margin-top: 15px;
+      margin-top: 10px;
+      font-size: 12px;
     }
 
     th {
       background: #0b2f6b;
       color: white;
-      padding: 12px;
+      padding: 7px;
+      font-size: 12px;
+      text-align: center;
     }
 
     td {
       border: 1px solid #ccc;
-      padding: 10px;
+      padding: 6px;
       text-transform: uppercase;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+
+    td button {
+      padding: 7px 8px;
+      font-size: 11px;
+      margin: 0;
+    }
+
+    #tabelaProdutos td:nth-child(1) {
+      width: 120px;
+      max-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #tabelaProdutos td:nth-child(2) {
+      max-width: 280px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #tabelaProdutos td:nth-child(3) {
+      width: 80px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #tabelaProdutos td:nth-child(4) {
+      width: 70px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #tabelaProdutos td:nth-child(5) {
+      width: 80px;
+      text-align: center;
     }
 
     .info-produto, .produto-caixa {
@@ -272,9 +315,18 @@
       }
 
       table {
-        font-size: 13px;
+        font-size: 11px;
         display: block;
         overflow-x: auto;
+      }
+
+      th, td {
+        font-size: 11px;
+        padding: 5px;
+      }
+
+      #tabelaProdutos td:nth-child(2) {
+        max-width: 180px;
       }
 
       .valor-grande {
@@ -742,8 +794,8 @@
     lista.forEach(produto => {
       tabela.innerHTML += `
         <tr>
-          <td>${produto.codigo}</td>
-          <td>${produto.nome}</td>
+          <td title="${produto.codigo}">${produto.codigo}</td>
+          <td title="${produto.nome}">${produto.nome}</td>
           <td>${formatarDinheiro(produto.preco)}</td>
           <td>${produto.estoque}</td>
           <td>
@@ -995,7 +1047,7 @@
 
       tabela.innerHTML += `
         <tr>
-          <td>${item.nome}</td>
+          <td title="${item.nome}">${item.nome}</td>
           <td>${item.quantidade}</td>
           <td>${formatarDinheiro(item.preco)}</td>
           <td>${formatarDinheiro(totalItem)}</td>
