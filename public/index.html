@@ -405,7 +405,7 @@
 
     .relatorio-botoes {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       margin-bottom: 15px;
     }
@@ -573,12 +573,6 @@
         margin: 0;
       }
 
-      body {
-        background: white;
-        margin: 0;
-        padding: 0;
-      }
-
       body * {
         visibility: hidden;
       }
@@ -588,18 +582,13 @@
       }
 
       .cupom {
-        display: block !important;
+        display: block;
         position: absolute;
         left: 0;
         top: 0;
-        width: 72mm;
-        padding: 4mm;
+        width: 80mm;
         border: none;
         box-shadow: none;
-        background: white;
-        color: black;
-        font-family: monospace;
-        font-size: 12px;
       }
     }
   </style>
@@ -829,22 +818,6 @@
       <p style="text-align:center;">OBRIGADO PELA PREFERÊNCIA</p>
       <p style="text-align:center;">*** CUPOM NÃO FISCAL ***</p>
     </div>
-
-    <div class="cupom" id="relatorioImpressao">
-      <h3 style="text-align:center;">APRESSOS</h3>
-      <p style="text-align:center;">RELATÓRIO DE VENDAS</p>
-      <p id="relatorioPeriodo"></p>
-      <p id="relatorioEmitido"></p>
-      <div class="linha"></div>
-      <p id="relatorioQtdVendas"></p>
-      <p id="relatorioQtdItens"></p>
-      <h3 id="relatorioTotalVendido"></h3>
-      <div class="linha"></div>
-      <p><b>PRODUTOS VENDIDOS</b></p>
-      <div id="relatorioProdutosVendidos"></div>
-      <div class="linha"></div>
-      <p style="text-align:center;">*** RELATÓRIO NÃO FISCAL ***</p>
-    </div>
   </div>
 
   <div id="funcoes" class="conteudo">
@@ -860,7 +833,6 @@
           <button onclick="carregarRelatorio('dia')">Relatório do Dia</button>
           <button class="azul" onclick="carregarRelatorio('mes')">Relatório do Mês</button>
           <button class="laranja" onclick="carregarRelatorio('ano')">Relatório do Ano</button>
-          <button class="cinza" onclick="abrirModalRelatorioImpressao()">Imprimir Relatório</button>
         </div>
 
         <div class="relatorio-grid">
@@ -916,22 +888,6 @@
 
     <button onclick="confirmarVenda()">SIM</button>
     <button class="vermelho" onclick="fecharModal()">NÃO</button>
-  </div>
-</div>
-
-<div class="modal" id="modalRelatorioImpressao">
-  <div class="modal-box">
-    <h2>Imprimir Relatório</h2>
-    <p>Escolha o período das vendas</p>
-
-    <label style="display:block; text-align:left; font-weight:bold; margin-top:10px;">Data inicial</label>
-    <input type="date" id="dataInicialRelatorio" style="text-transform:none;">
-
-    <label style="display:block; text-align:left; font-weight:bold; margin-top:10px;">Data final</label>
-    <input type="date" id="dataFinalRelatorio" style="text-transform:none;">
-
-    <button onclick="imprimirRelatorioPeriodo80mm()">IMPRIMIR</button>
-    <button class="vermelho" onclick="fecharModalRelatorioImpressao()">CANCELAR</button>
   </div>
 </div>
 
@@ -1531,102 +1487,6 @@ async function confirmarVenda() {
   document.getElementById("codigoVenda").focus();
 }
 
-function dataHojeInput() {
-  const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-  const dia = String(hoje.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
-}
-
-function formatarDataInput(data) {
-  if (!data) return "";
-  const partes = data.split("-");
-  return `${partes[2]}/${partes[1]}/${partes[0]}`;
-}
-
-function abrirModalRelatorioImpressao() {
-  const hoje = dataHojeInput();
-  document.getElementById("dataInicialRelatorio").value = hoje;
-  document.getElementById("dataFinalRelatorio").value = hoje;
-  document.getElementById("modalRelatorioImpressao").style.display = "flex";
-}
-
-function fecharModalRelatorioImpressao() {
-  document.getElementById("modalRelatorioImpressao").style.display = "none";
-}
-
-async function imprimirRelatorioPeriodo80mm() {
-  const dataInicial = document.getElementById("dataInicialRelatorio").value;
-  const dataFinal = document.getElementById("dataFinalRelatorio").value;
-
-  if (!dataInicial || !dataFinal) {
-    alert("Escolha a data inicial e a data final");
-    return;
-  }
-
-  if (dataInicial > dataFinal) {
-    alert("A data inicial não pode ser maior que a data final");
-    return;
-  }
-
-  const url = `/api/relatorio-impressao?dataInicial=${dataInicial}&dataFinal=${dataFinal}`;
-  const resposta = await fetch(url);
-  const dados = await resposta.json();
-
-  if (!resposta.ok) {
-    alert(dados.erro || "Erro ao gerar relatório");
-    return;
-  }
-
-  const agora = new Date();
-
-  document.getElementById("relatorioPeriodo").innerText =
-    "Período: " + formatarDataInput(dataInicial) + " até " + formatarDataInput(dataFinal);
-
-  document.getElementById("relatorioEmitido").innerText =
-    "Emitido: " + agora.toLocaleDateString("pt-BR") + " " + agora.toLocaleTimeString("pt-BR");
-
-  document.getElementById("relatorioQtdVendas").innerText =
-    "Quantidade de vendas: " + dados.quantidade_vendas;
-
-  document.getElementById("relatorioQtdItens").innerText =
-    "Itens vendidos: " + dados.quantidade_itens;
-
-  document.getElementById("relatorioTotalVendido").innerText =
-    "TOTAL: " + formatarDinheiro(dados.total_vendido);
-
-  let htmlProdutos = "";
-
-  dados.produtos.forEach(item => {
-    htmlProdutos += `
-      <p>
-        ${item.nome}<br>
-        QTD: ${item.quantidade} - ${formatarDinheiro(item.total)}
-      </p>
-    `;
-  });
-
-  if (!htmlProdutos) {
-    htmlProdutos = "<p>Nenhuma venda nesse período</p>";
-  }
-
-  document.getElementById("relatorioProdutosVendidos").innerHTML = htmlProdutos;
-
-  fecharModalRelatorioImpressao();
-
-  document.getElementById("cupom").style.display = "none";
-  document.getElementById("relatorioImpressao").style.display = "block";
-
-  setTimeout(() => {
-    window.print();
-
-    setTimeout(() => {
-      document.getElementById("relatorioImpressao").style.display = "none";
-    }, 500);
-  }, 500);
-}
-
 async function carregarRelatorio(periodo) {
   const resposta = await fetch("/api/relatorios/" + periodo);
   const dados = await resposta.json();
@@ -1672,7 +1532,6 @@ async function carregarRelatorio(periodo) {
 
 document.addEventListener("keydown", function(e) {
   const modalAberto = document.getElementById("modalFinalizar").style.display === "flex";
-  const modalRelatorioAberto = document.getElementById("modalRelatorioImpressao").style.display === "flex";
 
   if (e.key === "F1") {
     e.preventDefault();
@@ -1687,11 +1546,6 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "Escape" && modalAberto) {
     e.preventDefault();
     fecharModal();
-  }
-
-  if (e.key === "Escape" && modalRelatorioAberto) {
-    e.preventDefault();
-    fecharModalRelatorioImpressao();
   }
 });
 
