@@ -577,11 +577,11 @@
         visibility: hidden;
       }
 
-      .cupom, .cupom * {
+      .cupom.imprimir, .cupom.imprimir * {
         visibility: visible;
       }
 
-      .cupom {
+      .cupom.imprimir {
         display: block;
         position: absolute;
         left: 0;
@@ -818,6 +818,21 @@
       <p style="text-align:center;">OBRIGADO PELA PREFERÊNCIA</p>
       <p style="text-align:center;">*** CUPOM NÃO FISCAL ***</p>
     </div>
+
+    <div class="cupom" id="relatorio80">
+      <h3 style="text-align:center;">APRESSOS</h3>
+      <p style="text-align:center;">RELATÓRIO DIÁRIO</p>
+      <p id="relatorio80Data"></p>
+      <div class="linha"></div>
+      <p id="relatorio80Vendas"></p>
+      <p id="relatorio80Itens"></p>
+      <h3 id="relatorio80Total"></h3>
+      <div class="linha"></div>
+      <p><b>PRODUTOS VENDIDOS</b></p>
+      <div id="relatorio80Produtos"></div>
+      <div class="linha"></div>
+      <p style="text-align:center;">*** FECHAMENTO DO DIA ***</p>
+    </div>
   </div>
 
   <div id="funcoes" class="conteudo">
@@ -833,6 +848,7 @@
           <button onclick="carregarRelatorio('dia')">Relatório do Dia</button>
           <button class="azul" onclick="carregarRelatorio('mes')">Relatório do Mês</button>
           <button class="laranja" onclick="carregarRelatorio('ano')">Relatório do Ano</button>
+          <button class="cinza" onclick="imprimirRelatorioDiario80mm()">Imprimir Dia 80mm</button>
         </div>
 
         <div class="relatorio-grid">
@@ -1470,9 +1486,15 @@ async function confirmarVenda() {
   document.getElementById("itensCupom").innerHTML = itensCupom;
   document.getElementById("totalCupom").innerText = "TOTAL: " + formatarDinheiro(total);
 
+  document.getElementById("relatorio80").style.display = "none";
+  document.getElementById("relatorio80").classList.remove("imprimir");
   document.getElementById("cupom").style.display = "block";
+  document.getElementById("cupom").classList.add("imprimir");
 
   window.print();
+
+  document.getElementById("cupom").classList.remove("imprimir");
+  document.getElementById("cupom").style.display = "none";
 
   carrinho = [];
   listarCarrinho();
@@ -1485,6 +1507,58 @@ async function confirmarVenda() {
   await carregarProdutos();
 
   document.getElementById("codigoVenda").focus();
+}
+
+async function imprimirRelatorioDiario80mm() {
+  const resposta = await fetch("/api/relatorio-diario-impressao");
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    alert(dados.erro || "Erro ao gerar relatório");
+    return;
+  }
+
+  const agora = new Date();
+
+  document.getElementById("relatorio80Data").innerText =
+    "Data: " + agora.toLocaleDateString("pt-BR") +
+    " " + agora.toLocaleTimeString("pt-BR");
+
+  document.getElementById("relatorio80Vendas").innerText =
+    "Vendas realizadas: " + dados.quantidade_vendas;
+
+  document.getElementById("relatorio80Itens").innerText =
+    "Itens vendidos: " + dados.quantidade_itens;
+
+  document.getElementById("relatorio80Total").innerText =
+    "TOTAL: " + formatarDinheiro(dados.total_vendido);
+
+  let htmlProdutos = "";
+
+  dados.produtos.forEach(item => {
+    htmlProdutos += `
+      <p>
+        ${item.nome}<br>
+        QTD: ${item.quantidade} - ${formatarDinheiro(item.total)}
+      </p>
+    `;
+  });
+
+  if (!htmlProdutos) {
+    htmlProdutos = "<p>Nenhuma venda hoje</p>";
+  }
+
+  document.getElementById("relatorio80Produtos").innerHTML = htmlProdutos;
+
+  document.getElementById("cupom").style.display = "none";
+  document.getElementById("cupom").classList.remove("imprimir");
+  document.getElementById("relatorio80").style.display = "block";
+  document.getElementById("relatorio80").classList.add("imprimir");
+
+  window.print();
+
+  document.getElementById("relatorio80").classList.remove("imprimir");
+  document.getElementById("relatorio80").style.display = "none";
 }
 
 async function carregarRelatorio(periodo) {
