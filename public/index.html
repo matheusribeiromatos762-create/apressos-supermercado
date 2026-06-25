@@ -405,7 +405,7 @@
 
     .relatorio-botoes {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       margin-bottom: 15px;
     }
@@ -573,37 +573,33 @@
         margin: 0;
       }
 
-      html, body {
-        background: white !important;
-        margin: 0 !important;
-        padding: 0 !important;
+      body {
+        background: white;
+        margin: 0;
+        padding: 0;
       }
 
       body * {
-        visibility: hidden !important;
+        visibility: hidden;
       }
 
-      .cupom.imprimir,
-      .cupom.imprimir * {
-        visibility: visible !important;
+      .cupom, .cupom * {
+        visibility: visible;
       }
 
-      .cupom.imprimir {
+      .cupom {
         display: block !important;
-        position: fixed !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 72mm !important;
-        min-height: auto !important;
-        padding: 4mm !important;
-        margin: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        background: white !important;
-        color: black !important;
-        font-family: monospace !important;
-        font-size: 12px !important;
-        line-height: 1.25 !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 72mm;
+        padding: 4mm;
+        border: none;
+        box-shadow: none;
+        background: white;
+        color: black;
+        font-family: monospace;
+        font-size: 12px;
       }
     }
   </style>
@@ -834,19 +830,20 @@
       <p style="text-align:center;">*** CUPOM NÃO FISCAL ***</p>
     </div>
 
-    <div class="cupom" id="relatorio80">
+    <div class="cupom" id="relatorioImpressao">
       <h3 style="text-align:center;">APRESSOS</h3>
-      <p style="text-align:center;">RELATÓRIO DIÁRIO</p>
-      <p id="relatorio80Data"></p>
+      <p style="text-align:center;">RELATÓRIO DE VENDAS</p>
+      <p id="relatorioPeriodo"></p>
+      <p id="relatorioEmitido"></p>
       <div class="linha"></div>
-      <p id="relatorio80Vendas"></p>
-      <p id="relatorio80Itens"></p>
-      <h3 id="relatorio80Total"></h3>
+      <p id="relatorioQtdVendas"></p>
+      <p id="relatorioQtdItens"></p>
+      <h3 id="relatorioTotalVendido"></h3>
       <div class="linha"></div>
       <p><b>PRODUTOS VENDIDOS</b></p>
-      <div id="relatorio80Produtos"></div>
+      <div id="relatorioProdutosVendidos"></div>
       <div class="linha"></div>
-      <p style="text-align:center;">*** FECHAMENTO DO DIA ***</p>
+      <p style="text-align:center;">*** RELATÓRIO NÃO FISCAL ***</p>
     </div>
   </div>
 
@@ -863,7 +860,7 @@
           <button onclick="carregarRelatorio('dia')">Relatório do Dia</button>
           <button class="azul" onclick="carregarRelatorio('mes')">Relatório do Mês</button>
           <button class="laranja" onclick="carregarRelatorio('ano')">Relatório do Ano</button>
-          <button class="cinza" onclick="imprimirRelatorioDiario80mm()">Imprimir Dia 80mm</button>
+          <button class="cinza" onclick="abrirModalRelatorioImpressao()">Imprimir Relatório</button>
         </div>
 
         <div class="relatorio-grid">
@@ -919,6 +916,22 @@
 
     <button onclick="confirmarVenda()">SIM</button>
     <button class="vermelho" onclick="fecharModal()">NÃO</button>
+  </div>
+</div>
+
+<div class="modal" id="modalRelatorioImpressao">
+  <div class="modal-box">
+    <h2>Imprimir Relatório</h2>
+    <p>Escolha o período das vendas</p>
+
+    <label style="display:block; text-align:left; font-weight:bold; margin-top:10px;">Data inicial</label>
+    <input type="date" id="dataInicialRelatorio" style="text-transform:none;">
+
+    <label style="display:block; text-align:left; font-weight:bold; margin-top:10px;">Data final</label>
+    <input type="date" id="dataFinalRelatorio" style="text-transform:none;">
+
+    <button onclick="imprimirRelatorioPeriodo80mm()">IMPRIMIR</button>
+    <button class="vermelho" onclick="fecharModalRelatorioImpressao()">CANCELAR</button>
   </div>
 </div>
 
@@ -1501,15 +1514,9 @@ async function confirmarVenda() {
   document.getElementById("itensCupom").innerHTML = itensCupom;
   document.getElementById("totalCupom").innerText = "TOTAL: " + formatarDinheiro(total);
 
-  document.getElementById("relatorio80").style.display = "none";
-  document.getElementById("relatorio80").classList.remove("imprimir");
   document.getElementById("cupom").style.display = "block";
-  document.getElementById("cupom").classList.add("imprimir");
 
   window.print();
-
-  document.getElementById("cupom").classList.remove("imprimir");
-  document.getElementById("cupom").style.display = "none";
 
   carrinho = [];
   listarCarrinho();
@@ -1524,71 +1531,100 @@ async function confirmarVenda() {
   document.getElementById("codigoVenda").focus();
 }
 
-async function imprimirRelatorioDiario80mm() {
-  try {
-    const resposta = await fetch("/api/relatorio-diario-impressao");
-    const dados = await resposta.json();
+function dataHojeInput() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
 
-    if (!resposta.ok) {
-      alert(dados.erro || "Erro ao gerar relatório");
-      return;
-    }
+function formatarDataInput(data) {
+  if (!data) return "";
+  const partes = data.split("-");
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
 
-    const agora = new Date();
+function abrirModalRelatorioImpressao() {
+  const hoje = dataHojeInput();
+  document.getElementById("dataInicialRelatorio").value = hoje;
+  document.getElementById("dataFinalRelatorio").value = hoje;
+  document.getElementById("modalRelatorioImpressao").style.display = "flex";
+}
 
-    document.getElementById("relatorio80Data").innerText =
-      "Data: " + agora.toLocaleDateString("pt-BR") +
-      " " + agora.toLocaleTimeString("pt-BR");
+function fecharModalRelatorioImpressao() {
+  document.getElementById("modalRelatorioImpressao").style.display = "none";
+}
 
-    document.getElementById("relatorio80Vendas").innerText =
-      "Vendas realizadas: " + dados.quantidade_vendas;
+async function imprimirRelatorioPeriodo80mm() {
+  const dataInicial = document.getElementById("dataInicialRelatorio").value;
+  const dataFinal = document.getElementById("dataFinalRelatorio").value;
 
-    document.getElementById("relatorio80Itens").innerText =
-      "Itens vendidos: " + dados.quantidade_itens;
+  if (!dataInicial || !dataFinal) {
+    alert("Escolha a data inicial e a data final");
+    return;
+  }
 
-    document.getElementById("relatorio80Total").innerText =
-      "TOTAL: " + formatarDinheiro(dados.total_vendido);
+  if (dataInicial > dataFinal) {
+    alert("A data inicial não pode ser maior que a data final");
+    return;
+  }
 
-    let htmlProdutos = "";
+  const url = `/api/relatorio-impressao?dataInicial=${dataInicial}&dataFinal=${dataFinal}`;
+  const resposta = await fetch(url);
+  const dados = await resposta.json();
 
-    if (dados.produtos && dados.produtos.length > 0) {
-      dados.produtos.forEach(item => {
-        htmlProdutos += `
-          <p>
-            ${item.nome}<br>
-            QTD: ${item.quantidade} - ${formatarDinheiro(item.total)}
-          </p>
-        `;
-      });
-    } else {
-      htmlProdutos = "<p>Nenhuma venda hoje</p>";
-    }
+  if (!resposta.ok) {
+    alert(dados.erro || "Erro ao gerar relatório");
+    return;
+  }
 
-    document.getElementById("relatorio80Produtos").innerHTML = htmlProdutos;
+  const agora = new Date();
 
-    const cupomVenda = document.getElementById("cupom");
-    const relatorio = document.getElementById("relatorio80");
+  document.getElementById("relatorioPeriodo").innerText =
+    "Período: " + formatarDataInput(dataInicial) + " até " + formatarDataInput(dataFinal);
 
-    cupomVenda.style.display = "none";
-    cupomVenda.classList.remove("imprimir");
+  document.getElementById("relatorioEmitido").innerText =
+    "Emitido: " + agora.toLocaleDateString("pt-BR") + " " + agora.toLocaleTimeString("pt-BR");
 
-    relatorio.style.display = "block";
-    relatorio.classList.add("imprimir");
+  document.getElementById("relatorioQtdVendas").innerText =
+    "Quantidade de vendas: " + dados.quantidade_vendas;
 
-    const limparImpressao = () => {
-      relatorio.classList.remove("imprimir");
-      relatorio.style.display = "none";
-      window.removeEventListener("afterprint", limparImpressao);
-    };
+  document.getElementById("relatorioQtdItens").innerText =
+    "Itens vendidos: " + dados.quantidade_itens;
 
-    window.addEventListener("afterprint", limparImpressao);
+  document.getElementById("relatorioTotalVendido").innerText =
+    "TOTAL: " + formatarDinheiro(dados.total_vendido);
+
+  let htmlProdutos = "";
+
+  dados.produtos.forEach(item => {
+    htmlProdutos += `
+      <p>
+        ${item.nome}<br>
+        QTD: ${item.quantidade} - ${formatarDinheiro(item.total)}
+      </p>
+    `;
+  });
+
+  if (!htmlProdutos) {
+    htmlProdutos = "<p>Nenhuma venda nesse período</p>";
+  }
+
+  document.getElementById("relatorioProdutosVendidos").innerHTML = htmlProdutos;
+
+  fecharModalRelatorioImpressao();
+
+  document.getElementById("cupom").style.display = "none";
+  document.getElementById("relatorioImpressao").style.display = "block";
+
+  setTimeout(() => {
+    window.print();
 
     setTimeout(() => {
-      window.print();
-    }, 700);
-  } catch (erro) {
-    alert("Erro ao imprimir relatório diário");
-  }
+      document.getElementById("relatorioImpressao").style.display = "none";
+    }, 500);
+  }, 500);
 }
 
 async function carregarRelatorio(periodo) {
@@ -1636,6 +1672,7 @@ async function carregarRelatorio(periodo) {
 
 document.addEventListener("keydown", function(e) {
   const modalAberto = document.getElementById("modalFinalizar").style.display === "flex";
+  const modalRelatorioAberto = document.getElementById("modalRelatorioImpressao").style.display === "flex";
 
   if (e.key === "F1") {
     e.preventDefault();
@@ -1650,6 +1687,11 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "Escape" && modalAberto) {
     e.preventDefault();
     fecharModal();
+  }
+
+  if (e.key === "Escape" && modalRelatorioAberto) {
+    e.preventDefault();
+    fecharModalRelatorioImpressao();
   }
 });
 
