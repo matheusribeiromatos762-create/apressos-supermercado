@@ -1,7 +1,7 @@
 {
   "name": "apressos-supermercado",
-  "version": "1.0.0",
-  "description": "Sistema PDV Apressos Supermercado",
+  "version": "2.0.0",
+  "description": "Sistema PDV Apressos",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -10,8 +10,10 @@
     "node": "20.x"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.1"
   }
 }
