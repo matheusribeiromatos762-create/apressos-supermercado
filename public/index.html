@@ -2,7 +2,11 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Apressos Supermercado</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -122,17 +126,10 @@
       font-weight: bold;
     }
 
-    .vermelho {
-      background: #c0392b;
-    }
-
-    .azul {
-      background: #0b2f6b;
-    }
-
-    .laranja {
-      background: #e67e22;
-    }
+    .vermelho { background: #c0392b; }
+    .azul { background: #0b2f6b; }
+    .laranja { background: #e67e22; }
+    .cinza { background: #555; }
 
     table {
       width: 100%;
@@ -201,6 +198,20 @@
       text-align: center;
     }
 
+    .scanner-box {
+      background: white;
+      width: 95%;
+      max-width: 500px;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    #reader {
+      width: 100%;
+      margin-top: 10px;
+    }
+
     .cupom {
       display: none;
       width: 300px;
@@ -214,6 +225,75 @@
     .linha {
       border-top: 1px dashed #000;
       margin: 8px 0;
+    }
+
+    .mobile-only {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 5px;
+      }
+
+      .sistema {
+        border-radius: 0;
+      }
+
+      .topo {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+      }
+
+      .topo h1 {
+        font-size: 22px;
+      }
+
+      .hora {
+        font-size: 18px;
+      }
+
+      .abas, .sub-abas {
+        flex-direction: column;
+      }
+
+      .conteudo {
+        padding: 10px;
+      }
+
+      .grid, .caixa-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      table {
+        font-size: 13px;
+        display: block;
+        overflow-x: auto;
+      }
+
+      .valor-grande {
+        font-size: 34px;
+        text-align: center;
+      }
+
+      .produto-caixa h2,
+      .info-produto h2 {
+        font-size: 22px;
+      }
+
+      .mobile-only {
+        display: block;
+      }
+
+      .modal-box {
+        width: 90%;
+      }
     }
 
     @media print {
@@ -261,6 +341,9 @@
           <h2>Cadastrar Produto</h2>
 
           <input type="text" id="codigo" placeholder="Código de barras">
+          <button class="azul mobile-only" onclick="abrirScanner('codigo', 'nome')">📷 Ler Código pela Câmera</button>
+          <button class="cinza" onclick="buscarNomeProdutoPorCodigo('codigo', 'nome')">Buscar Nome pela Internet</button>
+
           <input type="text" id="nome" placeholder="Nome do produto">
           <input type="number" id="preco" placeholder="Preço de venda">
           <input type="number" id="estoqueInicial" placeholder="Quantidade em estoque">
@@ -294,6 +377,7 @@
           <h2>Movimentação de Estoque</h2>
 
           <input type="text" id="codigoEstoque" placeholder="Código de barras">
+          <button class="azul mobile-only" onclick="abrirScanner('codigoEstoque')">📷 Ler Código pela Câmera</button>
           <button onclick="buscarProdutoEstoque()">Buscar Produto</button>
 
           <input type="number" id="quantidadeMovimento" placeholder="Quantidade">
@@ -329,6 +413,7 @@
           <h2>Buscar Produto para Editar</h2>
 
           <input type="text" id="codigoEditarBusca" placeholder="Código de barras">
+          <button class="azul mobile-only" onclick="abrirScanner('codigoEditarBusca')">📷 Ler Código pela Câmera</button>
           <button onclick="buscarProdutoEditar()">Buscar Produto</button>
 
           <hr>
@@ -336,6 +421,9 @@
           <h2>Editar Informações</h2>
 
           <input type="text" id="editarCodigo" placeholder="Novo código de barras">
+          <button class="azul mobile-only" onclick="abrirScanner('editarCodigo', 'editarNome')">📷 Ler Novo Código pela Câmera</button>
+          <button class="cinza" onclick="buscarNomeProdutoPorCodigo('editarCodigo', 'editarNome')">Buscar Nome pela Internet</button>
+
           <input type="text" id="editarNome" placeholder="Novo nome do produto">
           <input type="number" id="editarPreco" placeholder="Novo preço">
           <input type="number" id="editarEstoque" placeholder="Novo estoque">
@@ -371,6 +459,8 @@
         <h2>Entrada do Caixa</h2>
 
         <input type="text" id="codigoVenda" placeholder="Código de barras">
+        <button class="azul mobile-only" onclick="abrirScanner('codigoVenda')">📷 Ler Código pela Câmera</button>
+
         <input type="number" id="quantidadeVenda" placeholder="Quantidade" value="1">
 
         <button onclick="adicionarAoCarrinho()">Adicionar Produto</button>
@@ -435,11 +525,23 @@
   </div>
 </div>
 
+<div class="modal" id="modalScanner">
+  <div class="scanner-box">
+    <h2>Leitor de Código de Barras</h2>
+    <p>Aponte a câmera para o código de barras</p>
+    <div id="reader"></div>
+    <button class="vermelho" onclick="fecharScanner()">Fechar Câmera</button>
+  </div>
+</div>
+
 <script>
   let produtos = [];
   let carrinho = [];
   let produtoEstoqueSelecionado = null;
   let produtoEditando = null;
+  let scanner = null;
+  let scannerCampoCodigo = null;
+  let scannerCampoNome = null;
 
   async function carregarProdutos() {
     const resposta = await fetch("/api/produtos");
@@ -480,6 +582,106 @@
       style: "currency",
       currency: "BRL"
     });
+  }
+
+  async function buscarNomeProdutoPorCodigo(campoCodigo, campoNome) {
+    const codigo = document.getElementById(campoCodigo).value.trim();
+
+    if (!codigo) {
+      alert("Digite ou escaneie um código de barras primeiro");
+      return;
+    }
+
+    try {
+      const url = `https://world.openfoodfacts.org/api/v2/product/${codigo}.json`;
+      const resposta = await fetch(url);
+      const dados = await resposta.json();
+
+      if (dados.status === 1 && dados.product) {
+        const nome =
+          dados.product.product_name_pt ||
+          dados.product.product_name ||
+          dados.product.generic_name_pt ||
+          dados.product.generic_name ||
+          "";
+
+        if (nome) {
+          document.getElementById(campoNome).value = nome.toUpperCase();
+          alert("Nome encontrado e preenchido");
+        } else {
+          alert("Produto encontrado, mas sem nome cadastrado na internet");
+        }
+      } else {
+        alert("Produto não encontrado na internet. Cadastre o nome manualmente");
+      }
+    } catch (erro) {
+      alert("Erro ao buscar produto na internet");
+    }
+  }
+
+  async function abrirScanner(campoCodigo, campoNome = null) {
+    scannerCampoCodigo = campoCodigo;
+    scannerCampoNome = campoNome;
+
+    document.getElementById("modalScanner").style.display = "flex";
+
+    if (scanner) {
+      await scanner.clear();
+      scanner = null;
+    }
+
+    scanner = new Html5Qrcode("reader");
+
+    scanner.start(
+      { facingMode: "environment" },
+      {
+        fps: 10,
+        qrbox: {
+          width: 280,
+          height: 140
+        }
+      },
+      async function(codigoLido) {
+        document.getElementById(scannerCampoCodigo).value = codigoLido.toUpperCase();
+
+        await fecharScanner();
+
+        if (scannerCampoNome) {
+          await buscarNomeProdutoPorCodigo(scannerCampoCodigo, scannerCampoNome);
+        }
+
+        if (scannerCampoCodigo === "codigoVenda") {
+          adicionarAoCarrinho();
+        }
+
+        if (scannerCampoCodigo === "codigoEstoque") {
+          buscarProdutoEstoque();
+        }
+
+        if (scannerCampoCodigo === "codigoEditarBusca") {
+          buscarProdutoEditar();
+        }
+      },
+      function() {}
+    ).catch(function() {
+      alert("Não foi possível acessar a câmera. Use HTTPS e permita o acesso à câmera.");
+      fecharScanner();
+    });
+  }
+
+  async function fecharScanner() {
+    document.getElementById("modalScanner").style.display = "none";
+
+    if (scanner) {
+      try {
+        await scanner.stop();
+        await scanner.clear();
+      } catch (e) {}
+
+      scanner = null;
+    }
+
+    document.getElementById("reader").innerHTML = "";
   }
 
   async function salvarProduto() {
